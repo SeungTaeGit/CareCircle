@@ -1,5 +1,6 @@
-profiles:
-  include: secret
+spring:
+  profiles:
+    active: secret
 
   jpa:
     hibernate:
@@ -8,3 +9,4 @@ profiles:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
