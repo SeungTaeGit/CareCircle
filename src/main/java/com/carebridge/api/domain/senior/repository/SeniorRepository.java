@@ -11,4 +11,5 @@ public interface SeniorRepository extends JpaRepository<Senior, Long> {
     boolean existsByLinkCode(String linkCode);
 
     Optional<Senior> findByPinCode(String pinCode);
+    Optional<Senior> findByLinkCode(String linkCode);
 }

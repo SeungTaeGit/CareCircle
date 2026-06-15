@@ -1,8 +1,6 @@
 package com.carebridge.api.domain.auth.controller;
 
-import com.carebridge.api.domain.auth.dto.request.AdminLoginRequest;
-import com.carebridge.api.domain.auth.dto.request.AdminSignupRequest;
-import com.carebridge.api.domain.auth.dto.request.SeniorLoginRequest;
+import com.carebridge.api.domain.auth.dto.request.*;
 import com.carebridge.api.domain.auth.dto.response.TokenResponse;
 import com.carebridge.api.domain.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +32,18 @@ public class AuthController {
     @PostMapping("/senior/login")
     public ResponseEntity<TokenResponse> loginSenior(@RequestBody SeniorLoginRequest request) {
         String token = authService.loginSenior(request);
+        return ResponseEntity.ok(new TokenResponse(token));
+    }
+
+    @PostMapping("/guardian/signup")
+    public ResponseEntity<String> signupGuardian(@RequestBody GuardianSignupRequest request) {
+        authService.signupGuardian(request);
+        return ResponseEntity.ok("보호자 회원가입 및 어르신 연동이 완료되었습니다.");
+    }
+
+    @PostMapping("/guardian/login")
+    public ResponseEntity<TokenResponse> loginGuardian(@RequestBody GuardianLoginRequest request) {
+        String token = authService.loginGuardian(request);
         return ResponseEntity.ok(new TokenResponse(token));
     }
 }
