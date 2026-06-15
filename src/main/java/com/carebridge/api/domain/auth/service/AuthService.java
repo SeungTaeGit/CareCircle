@@ -3,6 +3,9 @@ package com.carebridge.api.domain.auth.service;
 import com.carebridge.api.domain.admin.entity.Admin;
 import com.carebridge.api.domain.admin.repository.AdminRepository;
 import com.carebridge.api.domain.auth.dto.request.AdminSignupRequest;
+import com.carebridge.api.domain.auth.dto.request.SeniorLoginRequest;
+import com.carebridge.api.domain.senior.entity.Senior;
+import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import com.carebridge.api.global.config.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +21,7 @@ public class AuthService {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final SeniorRepository seniorRepository;
 
     @Transactional
     public Long signupAdmin(AdminSignupRequest request) {
@@ -49,5 +53,14 @@ public class AuthService {
         }
 
         return jwtProvider.createToken(admin.getEmail(), "ROLE_ADMIN");
+    }
+
+    @Transactional(readOnly = true)
+    public String loginSenior(SeniorLoginRequest request) {
+
+        Senior senior = seniorRepository.findByPinCode(request.getPinCode())
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 핀 번호입니다."));
+
+        return jwtProvider.createToken(String.valueOf(senior.getId()), "ROLE_SENIOR");
     }
 }

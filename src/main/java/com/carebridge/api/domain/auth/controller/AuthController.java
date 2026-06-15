@@ -2,6 +2,7 @@ package com.carebridge.api.domain.auth.controller;
 
 import com.carebridge.api.domain.auth.dto.request.AdminLoginRequest;
 import com.carebridge.api.domain.auth.dto.request.AdminSignupRequest;
+import com.carebridge.api.domain.auth.dto.request.SeniorLoginRequest;
 import com.carebridge.api.domain.auth.dto.response.TokenResponse;
 import com.carebridge.api.domain.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,12 @@ public class AuthController {
     @PostMapping("/admin/login")
     public ResponseEntity<TokenResponse> loginAdmin(@RequestBody AdminLoginRequest request) {
         String token = authService.loginAdmin(request);
+        return ResponseEntity.ok(new TokenResponse(token));
+    }
+
+    @PostMapping("/senior/login")
+    public ResponseEntity<TokenResponse> loginSenior(@RequestBody SeniorLoginRequest request) {
+        String token = authService.loginSenior(request);
         return ResponseEntity.ok(new TokenResponse(token));
     }
 }
