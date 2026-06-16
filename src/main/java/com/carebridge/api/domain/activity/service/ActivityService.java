@@ -1,13 +1,19 @@
 package com.carebridge.api.domain.activity.service;
 
 import com.carebridge.api.domain.activity.dto.request.ActivitySaveRequest;
+import com.carebridge.api.domain.activity.dto.response.ActivityRecordResponse;
 import com.carebridge.api.domain.activity.entity.ActivityRecord;
 import com.carebridge.api.domain.activity.repository.ActivityRepository;
+import com.carebridge.api.domain.guardian.entity.Guardian;
+import com.carebridge.api.domain.guardian.repository.GuardianRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +21,7 @@ public class ActivityService {
 
     private final ActivityRepository activityRepository;
     private final SeniorRepository seniorRepository;
+    private final GuardianRepository guardianRepository;
 
     @Transactional
     public void saveActivity(String seniorIdString, ActivitySaveRequest request) {
@@ -32,5 +39,20 @@ public class ActivityService {
                 .build();
 
         activityRepository.save(record);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActivityRecordResponse> getActivitiesForGuardian(String guardianEmail) {
+
+        Guardian guardian = guardianRepository.findByEmail(guardianEmail)
+                .orElseThrow(() -> new IllegalArgumentException("보호자 정보를 찾을 수 없습니다."));
+
+        Long seniorId = guardian.getSenior().getId();
+
+        List<ActivityRecord> records = activityRepository.findAllBySeniorIdOrderByCreatedAtDesc(seniorId);
+
+        return records.stream()
+                .map(ActivityRecordResponse::new)
+                .collect(Collectors.toList());
     }
 }
