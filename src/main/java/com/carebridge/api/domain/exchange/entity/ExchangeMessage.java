@@ -42,4 +42,8 @@ public class ExchangeMessage extends BaseTimeEntity {
         this.content = content;
         this.status = status;
     }
+
+    public void changeStatus(String newStatus) {
+        this.status = newStatus;
+    }
 }
