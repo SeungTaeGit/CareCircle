@@ -4,6 +4,7 @@ import com.carebridge.api.domain.admin.entity.Admin;
 import com.carebridge.api.domain.admin.repository.AdminRepository;
 import com.carebridge.api.domain.senior.dto.request.SeniorCreateRequest;
 import com.carebridge.api.domain.senior.dto.response.SeniorCreateResponse;
+import com.carebridge.api.domain.senior.dto.response.SeniorProfileResponse;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import com.carebridge.api.global.util.CodeGenerator;
@@ -55,5 +56,13 @@ public class SeniorService {
             code = CodeGenerator.generateLinkCode();
         } while (seniorRepository.existsByLinkCode(code));
         return code;
+    }
+
+    @Transactional(readOnly = true)
+    public SeniorProfileResponse getMyProfile(Long seniorId) {
+        Senior senior = seniorRepository.findById(seniorId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        return new SeniorProfileResponse(senior);
     }
 }

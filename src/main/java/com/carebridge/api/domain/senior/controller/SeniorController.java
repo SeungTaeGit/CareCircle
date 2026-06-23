@@ -2,10 +2,12 @@ package com.carebridge.api.domain.senior.controller;
 
 import com.carebridge.api.domain.senior.dto.request.SeniorCreateRequest;
 import com.carebridge.api.domain.senior.dto.response.SeniorCreateResponse;
+import com.carebridge.api.domain.senior.dto.response.SeniorProfileResponse;
 import com.carebridge.api.domain.senior.service.SeniorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,6 +26,16 @@ public class SeniorController {
 
         SeniorCreateResponse response = seniorService.registerSenior(adminEmail, request);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<SeniorProfileResponse> getMyProfile(
+            @AuthenticationPrincipal String loginId
+    ) {
+        Long seniorId = Long.parseLong(loginId);
+
+        SeniorProfileResponse response = seniorService.getMyProfile(seniorId);
         return ResponseEntity.ok(response);
     }
 }

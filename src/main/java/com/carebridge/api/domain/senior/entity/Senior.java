@@ -36,6 +36,11 @@ public class Senior extends BaseTimeEntity {
     @JoinColumn(name = "admin_id", nullable = false)
     private Admin admin;
 
+    private String country;
+    private String language;
+    private String matchStatus;
+    private String hobbies;
+
     @Builder
     public Senior(String name, String gender, String birthDate, String pinCode, String linkCode, Admin admin) {
         this.name = name;
