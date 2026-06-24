@@ -2,10 +2,12 @@ package com.carebridge.api.domain.activity.controller;
 
 import com.carebridge.api.domain.activity.dto.request.ActivitySaveRequest;
 import com.carebridge.api.domain.activity.dto.response.ActivityRecordResponse;
+import com.carebridge.api.domain.activity.dto.response.GuardianDashboardResponse;
 import com.carebridge.api.domain.activity.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,12 +32,11 @@ public class ActivityController {
     }
 
     @GetMapping("/guardian")
-    public ResponseEntity<List<ActivityRecordResponse>> getActivitiesForGuardian(
-            Authentication authentication) {
-
-        String guardianEmail = authentication.getName();
-
-        List<ActivityRecordResponse> response = activityService.getActivitiesForGuardian(guardianEmail);
+    public ResponseEntity<GuardianDashboardResponse> getGuardianDashboard(
+            @AuthenticationPrincipal String loginId
+    ) {
+        Long guardianId = Long.parseLong(loginId);
+        GuardianDashboardResponse response = activityService.getGuardianDashboard(guardianId);
 
         return ResponseEntity.ok(response);
     }

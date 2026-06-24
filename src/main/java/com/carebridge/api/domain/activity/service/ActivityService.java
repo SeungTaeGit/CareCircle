@@ -1,7 +1,9 @@
 package com.carebridge.api.domain.activity.service;
 
 import com.carebridge.api.domain.activity.dto.request.ActivitySaveRequest;
+import com.carebridge.api.domain.activity.dto.response.ActivityDto;
 import com.carebridge.api.domain.activity.dto.response.ActivityRecordResponse;
+import com.carebridge.api.domain.activity.dto.response.GuardianDashboardResponse;
 import com.carebridge.api.domain.activity.entity.ActivityRecord;
 import com.carebridge.api.domain.activity.repository.ActivityRepository;
 import com.carebridge.api.domain.guardian.entity.Guardian;
@@ -12,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,5 +57,43 @@ public class ActivityService {
         return records.stream()
                 .map(ActivityRecordResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public GuardianDashboardResponse getGuardianDashboard(Long guardianId) {
+
+        Guardian guardian = guardianRepository.findById(guardianId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보호자입니다."));
+
+        Senior senior = guardian.getSenior();
+        if (senior == null) {
+            throw new IllegalStateException("아직 매칭된 시니어가 없습니다.");
+        }
+
+        List<ActivityRecord> records = activityRepository.findAllBySeniorIdOrderByCreatedAtDesc(senior.getId());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        List<ActivityDto> activityDtos = records.stream().map(record -> {
+            String summary = String.format("인지 활동 게임 진행 - 점수: %d점, 플레이 시간: %d초",
+                    record.getScore(), record.getPlayTimeSeconds());
+
+            return ActivityDto.builder()
+                    .id(record.getId())
+                    .date(record.getCreatedAt() != null ? record.getCreatedAt().format(formatter) : "")
+                    .missionTitle(record.getActivityType() + " 인지 훈련 완료!")
+                    .type(record.getActivityType())
+                    .contentSummary(summary)
+                    .build();
+        }).collect(Collectors.toList());
+
+        int calculatedGardenLevel = (records.size() / 5) + 1;
+
+        return GuardianDashboardResponse.builder()
+                .seniorName(senior.getName())
+                .sentiment("Sunny")
+                .gardenLevel(calculatedGardenLevel)
+                .activities(activityDtos)
+                .build();
     }
 }
