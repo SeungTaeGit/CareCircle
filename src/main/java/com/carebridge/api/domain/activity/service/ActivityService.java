@@ -10,6 +10,7 @@ import com.carebridge.api.domain.guardian.entity.Guardian;
 import com.carebridge.api.domain.guardian.repository.GuardianRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
+import com.carebridge.api.global.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class ActivityService {
     private final ActivityRepository activityRepository;
     private final SeniorRepository seniorRepository;
     private final GuardianRepository guardianRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public void saveActivity(Long seniorId, ActivitySaveRequest request, MultipartFile audioFile) {
@@ -35,8 +37,7 @@ public class ActivityService {
 
         String uploadedAudioUrl = null;
         if (audioFile != null && !audioFile.isEmpty()) {
-            // uploadedAudioUrl = s3Uploader.upload(audioFile, "activities"); // S3Uploader 완성 후 주석 해제
-            uploadedAudioUrl = "임시_테스트_URL_나중에_S3랑_연결할것.mp3";
+            uploadedAudioUrl = s3Uploader.upload(audioFile, "activities");
         }
 
         ActivityRecord record = ActivityRecord.builder()
