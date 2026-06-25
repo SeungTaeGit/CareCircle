@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -21,14 +22,15 @@ public class ActivityController {
 
     @PostMapping
     public ResponseEntity<String> saveActivity(
-            Authentication authentication,
-            @RequestBody ActivitySaveRequest request) {
+            @AuthenticationPrincipal String loginId,
+            @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,
+            @RequestPart(value = "data") ActivitySaveRequest request) {
 
-        String seniorIdString = authentication.getName();
+        Long seniorId = Long.parseLong(loginId);
 
-        activityService.saveActivity(seniorIdString, request);
+        activityService.saveActivity(seniorId, request, audioFile);
 
-        return ResponseEntity.ok("활동 기록이 성공적으로 저장되었습니다.");
+        return ResponseEntity.ok("활동 기록 및 음성 파일이 성공적으로 저장되었습니다.");
     }
 
     @GetMapping("/guardian")
@@ -38,7 +40,6 @@ public class ActivityController {
         String guardianEmail = authentication.getName();
 
         GuardianDashboardResponse response = activityService.getGuardianDashboard(guardianEmail);
-
 
         return ResponseEntity.ok(response);
     }
