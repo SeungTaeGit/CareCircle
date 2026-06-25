@@ -60,9 +60,9 @@ public class ActivityService {
     }
 
     @Transactional(readOnly = true)
-    public GuardianDashboardResponse getGuardianDashboard(Long guardianId) {
+    public GuardianDashboardResponse getGuardianDashboard(String guardianEmail) {
 
-        Guardian guardian = guardianRepository.findById(guardianId)
+        Guardian guardian = guardianRepository.findByEmail(guardianEmail)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보호자입니다."));
 
         Senior senior = guardian.getSenior();

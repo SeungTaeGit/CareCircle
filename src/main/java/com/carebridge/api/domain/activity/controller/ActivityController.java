@@ -33,10 +33,12 @@ public class ActivityController {
 
     @GetMapping("/guardian")
     public ResponseEntity<GuardianDashboardResponse> getGuardianDashboard(
-            @AuthenticationPrincipal String loginId
+            Authentication authentication
     ) {
-        Long guardianId = Long.parseLong(loginId);
-        GuardianDashboardResponse response = activityService.getGuardianDashboard(guardianId);
+        String guardianEmail = authentication.getName();
+
+        GuardianDashboardResponse response = activityService.getGuardianDashboard(guardianEmail);
+
 
         return ResponseEntity.ok(response);
     }
