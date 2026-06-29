@@ -34,6 +34,12 @@ public class ExchangeMessage extends BaseTimeEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(length = 1000)
+    private String audioUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String translatedContent;
+
     @Builder
     public ExchangeMessage(Senior sender, Senior receiver, String messageType, String content, String status) {
         this.sender = sender;

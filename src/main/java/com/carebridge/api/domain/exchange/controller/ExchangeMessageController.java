@@ -39,4 +39,10 @@ public class ExchangeMessageController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{messageId}/read")
+    public ResponseEntity<String> markAsRead(@PathVariable Long messageId) {
+        exchangeMessageService.markAsRead(messageId);
+        return ResponseEntity.ok("메시지 읽음 처리 완료");
+    }
 }

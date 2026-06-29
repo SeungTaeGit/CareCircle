@@ -13,6 +13,8 @@ public class ExchangeMessageResponse {
     private String content;
     private String status;
     private LocalDateTime createdAt;
+    private String audioUrl;
+    private String translatedContent;
 
     public ExchangeMessageResponse(ExchangeMessage message) {
         this.messageId = message.getId();
@@ -21,5 +23,7 @@ public class ExchangeMessageResponse {
         this.content = message.getContent();
         this.status = message.getStatus();
         this.createdAt = message.getCreatedAt();
+        this.audioUrl = message.getAudioUrl();
+        this.translatedContent = message.getTranslatedContent();
     }
 }

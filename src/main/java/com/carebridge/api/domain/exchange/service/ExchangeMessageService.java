@@ -56,4 +56,12 @@ public class ExchangeMessageService {
                 .map(ExchangeMessageResponse::new)
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void markAsRead(Long messageId) {
+        ExchangeMessage message = exchangeMessageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("메시지를 찾을 수 없습니다."));
+
+        message.changeStatus("READ");
+    }
 }
