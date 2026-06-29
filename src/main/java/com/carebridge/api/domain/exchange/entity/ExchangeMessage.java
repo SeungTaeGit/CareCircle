@@ -41,12 +41,14 @@ public class ExchangeMessage extends BaseTimeEntity {
     private String translatedContent;
 
     @Builder
-    public ExchangeMessage(Senior sender, Senior receiver, String messageType, String content, String status) {
+    public ExchangeMessage(Senior sender, Senior receiver, String messageType, String content, String status, String audioUrl, String translatedContent) {
         this.sender = sender;
         this.receiver = receiver;
         this.messageType = messageType;
         this.content = content;
         this.status = status;
+        this.audioUrl = audioUrl;
+        this.translatedContent = translatedContent;
     }
 
     public void changeStatus(String newStatus) {

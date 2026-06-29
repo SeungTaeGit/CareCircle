@@ -6,9 +6,11 @@ import com.carebridge.api.domain.exchange.entity.ExchangeMessage;
 import com.carebridge.api.domain.exchange.repository.ExchangeMessageRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
+import com.carebridge.api.global.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,12 +21,12 @@ public class ExchangeMessageService {
 
     private final ExchangeMessageRepository exchangeMessageRepository;
     private final SeniorRepository seniorRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
-    public void sendMessage(String senderIdString, ExchangeMessageRequest request) {
+    public void sendMessage(Long senderIdString, ExchangeMessageRequest request, MultipartFile audioFile) {
 
-        Long senderId = Long.parseLong(senderIdString);
-        Senior sender = seniorRepository.findById(senderId)
+        Senior sender = seniorRepository.findById(senderIdString)
                 .orElseThrow(() -> new IllegalArgumentException("발신자 어르신 정보를 찾을 수 없습니다."));
 
         Senior receiver = seniorRepository.findById(request.getReceiverId())
@@ -44,6 +46,7 @@ public class ExchangeMessageService {
                 .receiver(receiver)
                 .messageType(request.getMessageType())
                 .content(request.getContent())
+                .audioUrl(uploadedAudioUrl)
                 .status("UNREAD")
                 .build();
 
