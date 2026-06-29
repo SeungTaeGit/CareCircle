@@ -10,9 +10,11 @@ import com.carebridge.api.domain.guardian.entity.Guardian;
 import com.carebridge.api.domain.guardian.repository.GuardianRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
+import com.carebridge.api.global.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,20 +27,25 @@ public class ActivityService {
     private final ActivityRepository activityRepository;
     private final SeniorRepository seniorRepository;
     private final GuardianRepository guardianRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
-    public void saveActivity(String seniorIdString, ActivitySaveRequest request) {
-
-        Long seniorId = Long.parseLong(seniorIdString);
+    public void saveActivity(Long seniorId, ActivitySaveRequest request, MultipartFile audioFile) {
 
         Senior senior = seniorRepository.findById(seniorId)
-                .orElseThrow(() -> new IllegalArgumentException("어르신 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        String uploadedAudioUrl = null;
+        if (audioFile != null && !audioFile.isEmpty()) {
+            uploadedAudioUrl = s3Uploader.upload(audioFile, "activities");
+        }
 
         ActivityRecord record = ActivityRecord.builder()
                 .senior(senior)
                 .activityType(request.getActivityType())
                 .score(request.getScore())
                 .playTimeSeconds(request.getPlayTimeSeconds())
+                .audioUrl(uploadedAudioUrl)
                 .build();
 
         activityRepository.save(record);

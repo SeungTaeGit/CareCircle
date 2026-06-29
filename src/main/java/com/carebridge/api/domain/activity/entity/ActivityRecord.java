@@ -30,11 +30,15 @@ public class ActivityRecord extends BaseTimeEntity {
     @Column(nullable = false)
     private int playTimeSeconds;
 
+    @Column(length = 1000)
+    private String audioUrl;
+
     @Builder
-    public ActivityRecord(Senior senior, String activityType, int score, int playTimeSeconds) {
+    public ActivityRecord(Senior senior, String activityType, int score, int playTimeSeconds, String audioUrl) {
         this.senior = senior;
         this.activityType = activityType;
         this.score = score;
         this.playTimeSeconds = playTimeSeconds;
+        this.audioUrl = audioUrl;
     }
 }
