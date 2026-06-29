@@ -22,7 +22,7 @@ public class ActivityController {
     @PostMapping
     public ResponseEntity<String> saveActivity(
             Authentication authentication,
-            @RequestBody ActivitySaveRequest request) {
+            @RequestPart(value = "data") ActivitySaveRequest request) {
 
         String seniorIdString = authentication.getName();
 

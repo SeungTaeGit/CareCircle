@@ -1,6 +1,7 @@
 package com.carebridge.api.domain.senior.controller;
 
 import com.carebridge.api.domain.senior.dto.request.SeniorCreateRequest;
+import com.carebridge.api.domain.senior.dto.response.PartnerProfileResponse;
 import com.carebridge.api.domain.senior.dto.response.SeniorCreateResponse;
 import com.carebridge.api.domain.senior.dto.response.SeniorProfileResponse;
 import com.carebridge.api.domain.senior.service.SeniorService;
@@ -36,6 +37,16 @@ public class SeniorController {
         Long seniorId = Long.parseLong(loginId);
 
         SeniorProfileResponse response = seniorService.getMyProfile(seniorId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/partner")
+    public ResponseEntity<PartnerProfileResponse> getPartnerProfile(
+            @AuthenticationPrincipal String loginId) {
+
+        Long myId = Long.parseLong(loginId);
+        PartnerProfileResponse response = seniorService.getPartnerProfile(myId);
+
         return ResponseEntity.ok(response);
     }
 }

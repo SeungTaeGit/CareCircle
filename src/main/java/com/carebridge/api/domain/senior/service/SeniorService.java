@@ -3,6 +3,7 @@ package com.carebridge.api.domain.senior.service;
 import com.carebridge.api.domain.admin.entity.Admin;
 import com.carebridge.api.domain.admin.repository.AdminRepository;
 import com.carebridge.api.domain.senior.dto.request.SeniorCreateRequest;
+import com.carebridge.api.domain.senior.dto.response.PartnerProfileResponse;
 import com.carebridge.api.domain.senior.dto.response.SeniorCreateResponse;
 import com.carebridge.api.domain.senior.dto.response.SeniorProfileResponse;
 import com.carebridge.api.domain.senior.entity.Senior;
@@ -64,5 +65,25 @@ public class SeniorService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return new SeniorProfileResponse(senior);
+    }
+
+    @Transactional(readOnly = true)
+    public PartnerProfileResponse getPartnerProfile(Long myId) {
+        Senior me = seniorRepository.findById(myId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (me.getLinkCode() == null || !"MATCHED".equals(me.getMatchStatus())) {
+            throw new IllegalStateException("아직 매칭된 파트너가 없습니다.");
+        }
+
+        Senior partner = seniorRepository.findByLinkCodeAndIdNot(me.getLinkCode(), me.getId())
+                .orElseThrow(() -> new IllegalStateException("파트너 정보를 찾을 수 없습니다."));
+
+        return PartnerProfileResponse.builder()
+                .partnerId(partner.getId())
+                .partnerName(partner.getName())
+                .country(partner.getCountry())
+                .language(partner.getLanguage())
+                .build();
     }
 }

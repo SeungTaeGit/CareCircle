@@ -12,4 +12,5 @@ public interface SeniorRepository extends JpaRepository<Senior, Long> {
 
     Optional<Senior> findByPinCode(String pinCode);
     Optional<Senior> findByLinkCode(String linkCode);
+    Optional<Senior> findByLinkCodeAndIdNot(String linkCode, Long myId);
 }
