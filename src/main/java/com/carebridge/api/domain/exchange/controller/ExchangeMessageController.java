@@ -6,7 +6,9 @@ import com.carebridge.api.domain.exchange.service.ExchangeMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,14 +21,15 @@ public class ExchangeMessageController {
 
     @PostMapping
     public ResponseEntity<String> sendMessage(
-            Authentication authentication,
-            @RequestBody ExchangeMessageRequest request) {
+            @AuthenticationPrincipal String loginId,
+            @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,
+            @RequestPart(value = "data") ExchangeMessageRequest request) {
 
-        String senderIdString = authentication.getName();
+        Long senderId = Long.parseLong(loginId);
 
-        exchangeMessageService.sendMessage(senderIdString, request);
+        exchangeMessageService.sendMessage(senderId, request, audioFile);
 
-        return ResponseEntity.ok("교류 메시지가 성공적으로 전송되었습니다.");
+        return ResponseEntity.ok("메시지가 성공적으로 전송되었습니다.");
     }
 
     @GetMapping("/received")

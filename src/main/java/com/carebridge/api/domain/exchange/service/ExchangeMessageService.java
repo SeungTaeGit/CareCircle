@@ -34,6 +34,11 @@ public class ExchangeMessageService {
             throw new IllegalArgumentException("자기 자신에게는 메시지를 보낼 수 없습니다.");
         }
 
+        String uploadedAudioUrl = null;
+        if (audioFile != null && !audioFile.isEmpty()) {
+            uploadedAudioUrl = s3Uploader.upload(audioFile, "exchange");
+        }
+
         ExchangeMessage message = ExchangeMessage.builder()
                 .sender(sender)
                 .receiver(receiver)
