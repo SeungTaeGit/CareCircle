@@ -29,7 +29,7 @@ public class Senior extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 6)
     private String pinCode;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String linkCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,5 +49,10 @@ public class Senior extends BaseTimeEntity {
         this.pinCode = pinCode;
         this.linkCode = linkCode;
         this.admin = admin;
+    }
+
+    public void updateMatchInfo(String matchStatus, String linkCode) {
+        this.matchStatus = matchStatus;
+        this.linkCode = linkCode;
     }
 }
