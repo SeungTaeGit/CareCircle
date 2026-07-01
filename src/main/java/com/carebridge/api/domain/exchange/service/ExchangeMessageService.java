@@ -1,5 +1,7 @@
 package com.carebridge.api.domain.exchange.service;
 
+import com.carebridge.api.domain.ai.dto.AiResultDto;
+import com.carebridge.api.domain.ai.service.CareAiService;
 import com.carebridge.api.domain.exchange.dto.request.ExchangeMessageRequest;
 import com.carebridge.api.domain.exchange.dto.response.ExchangeMessageResponse;
 import com.carebridge.api.domain.exchange.entity.ExchangeMessage;
@@ -8,6 +10,7 @@ import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import com.carebridge.api.global.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExchangeMessageService {
@@ -22,13 +26,13 @@ public class ExchangeMessageService {
     private final ExchangeMessageRepository exchangeMessageRepository;
     private final SeniorRepository seniorRepository;
     private final S3Uploader s3Uploader;
+    private final CareAiService careAiService;
 
     @Transactional
-    public void sendMessage(Long senderIdString, ExchangeMessageRequest request, MultipartFile audioFile) {
+    public void sendMessage(Long senderId, ExchangeMessageRequest request, MultipartFile audioFile) {
 
-        Senior sender = seniorRepository.findById(senderIdString)
+        Senior sender = seniorRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("발신자 어르신 정보를 찾을 수 없습니다."));
-
         Senior receiver = seniorRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new IllegalArgumentException("수신자 어르신 정보를 찾을 수 없습니다."));
 
@@ -36,21 +40,46 @@ public class ExchangeMessageService {
             throw new IllegalArgumentException("자기 자신에게는 메시지를 보낼 수 없습니다.");
         }
 
-        String uploadedAudioUrl = null;
-        if (audioFile != null && !audioFile.isEmpty()) {
-            uploadedAudioUrl = s3Uploader.upload(audioFile, "exchange");
+        if (audioFile == null || audioFile.isEmpty()) {
+            throw new IllegalArgumentException("음성 파일이 필수입니다.");
         }
 
-        ExchangeMessage message = ExchangeMessage.builder()
-                .sender(sender)
-                .receiver(receiver)
-                .messageType(request.getMessageType())
-                .content(request.getContent())
-                .audioUrl(uploadedAudioUrl)
-                .status("UNREAD")
-                .build();
+        String uploadedAudioUrl = s3Uploader.upload(audioFile, "exchange");
 
-        exchangeMessageRepository.save(message);
+        try {
+            String targetLanguage = receiver.getLanguage();
+
+            if (targetLanguage == null || targetLanguage.isBlank()) {
+                targetLanguage = "JP".equalsIgnoreCase(receiver.getCountry()) ? "일본어" : "한국어";
+            }
+
+            AiResultDto aiResult = careAiService.analyzeAudio(audioFile.getBytes(), targetLanguage);
+
+            log.info("📊 [대시보드 전송 데이터] {} 어르신의 감정 상태: {}", sender.getName(), aiResult.getEmotionWeights());
+
+
+            if (aiResult.isHarmful()) {
+                log.warn("🚨 [차단됨] 부적절한 표현 감지! 원본 STT: {}", aiResult.getStt());
+                throw new IllegalArgumentException("부적절한 표현이 감지되어 메시지가 전송되지 않았습니다.");
+            }
+
+            ExchangeMessage message = ExchangeMessage.builder()
+                    .sender(sender)
+                    .receiver(receiver)
+                    .messageType(request.getMessageType())
+                    .content(aiResult.getStt())
+                    .translatedContent(aiResult.getTranslatedText())
+                    .audioUrl(uploadedAudioUrl)
+                    .status("UNREAD")
+                    .build();
+
+            exchangeMessageRepository.save(message);
+            log.info("✅ [전송 완료] {} 번역본: {}", targetLanguage, aiResult.getTranslatedText());
+
+        } catch (Exception e) {
+            log.error("메시지 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
