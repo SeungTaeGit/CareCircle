@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SeniorCreateRequest {
     private String name;
+    private String contact;
     private String gender;
     private String birthDate;
     private String country;

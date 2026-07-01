@@ -31,8 +31,12 @@ public class SeniorService {
 
         Senior senior = Senior.builder()
                 .name(request.getName())
+                .contact(request.getContact())
                 .gender(request.getGender())
                 .birthDate(request.getBirthDate())
+                .country(request.getCountry())
+                .language(request.getLanguage())
+                .hobbies(request.getHobbies())
                 .pinCode(uniquePinCode)
                 .linkCode(uniqueLinkCode)
                 .admin(admin)

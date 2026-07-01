@@ -20,6 +20,8 @@ public class Senior extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;
 
+    private String contact;
+
     @Column(nullable = false)
     private String gender;
 
@@ -42,10 +44,16 @@ public class Senior extends BaseTimeEntity {
     private String hobbies;
 
     @Builder
-    public Senior(String name, String gender, String birthDate, String pinCode, String linkCode, Admin admin) {
+    public Senior(String name, String contact, String gender, String birthDate,
+                  String country, String language, String hobbies,
+                  String pinCode, String linkCode, Admin admin) {
         this.name = name;
+        this.contact = contact;
         this.gender = gender;
         this.birthDate = birthDate;
+        this.country = country;
+        this.language = language;
+        this.hobbies = hobbies;
         this.pinCode = pinCode;
         this.linkCode = linkCode;
         this.admin = admin;
