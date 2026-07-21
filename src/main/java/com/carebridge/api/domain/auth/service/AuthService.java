@@ -63,6 +63,8 @@ public class AuthService {
         Senior senior = seniorRepository.findByPinCode(request.getPinCode())
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 핀 번호입니다."));
 
+        senior.updateLastActiveAt();
+
         return jwtProvider.createToken(String.valueOf(senior.getId()), "ROLE_SENIOR");
     }
 

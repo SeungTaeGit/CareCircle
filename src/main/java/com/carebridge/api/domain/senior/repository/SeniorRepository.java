@@ -3,6 +3,7 @@ package com.carebridge.api.domain.senior.repository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +17,5 @@ public interface SeniorRepository extends JpaRepository<Senior, Long> {
     Optional<Senior> findByLinkCodeAndIdNot(String linkCode, Long myId);
     Optional<Senior> findFirstByMatchStatusAndCountryNot(String matchStatus, String country);
     List<Senior> findAllByMatchStatusAndIdNot(String matchStatus, Long id);
+    List<Senior> findByLastActiveAtBefore(LocalDateTime threshold);
 }

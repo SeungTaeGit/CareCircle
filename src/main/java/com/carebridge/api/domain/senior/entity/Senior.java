@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,6 +45,9 @@ public class Senior extends BaseTimeEntity {
     private String matchStatus;
     private String hobbies;
 
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
     @Builder
     public Senior(String name, String contact, String gender, String birthDate,
                   String country, String language, String hobbies,
@@ -62,5 +67,9 @@ public class Senior extends BaseTimeEntity {
     public void updateMatchInfo(String matchStatus, String linkCode) {
         this.matchStatus = matchStatus;
         this.linkCode = linkCode;
+    }
+
+    public void updateLastActiveAt() {
+        this.lastActiveAt = LocalDateTime.now();
     }
 }

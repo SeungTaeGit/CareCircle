@@ -36,6 +36,8 @@ public class ExchangeMessageService {
         Senior receiver = seniorRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new IllegalArgumentException("수신자 어르신 정보를 찾을 수 없습니다."));
 
+        sender.updateLastActiveAt();
+
         if (sender.getId().equals(receiver.getId())) {
             throw new IllegalArgumentException("자기 자신에게는 메시지를 보낼 수 없습니다.");
         }
