@@ -1,5 +1,6 @@
 package com.carebridge.api.domain.admin.service;
 
+import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
 import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,16 +47,16 @@ public class AdminService {
     }
 
     @Transactional
-    public void matchSenior(Long seniorId) {
+    public void matchSenior(Long seniorId, Long partnerId) {
         Senior me = seniorRepository.findById(seniorId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 어르신을 찾을 수 없습니다."));
 
-        if ("MATCHED".equals(me.getMatchStatus())) {
-            throw new IllegalStateException("이미 매칭된 어르신입니다.");
-        }
+        Senior partner = seniorRepository.findById(partnerId)
+                .orElseThrow(() -> new IllegalArgumentException("파트너 어르신을 찾을 수 없습니다."));
 
-        Senior partner = seniorRepository.findFirstByMatchStatusAndCountryNot("WAITING", me.getCountry())
-                .orElseThrow(() -> new IllegalStateException("현재 매칭 가능한 해외 파트너가 없습니다. 잠시 후 다시 시도해주세요."));
+        if (!"WAITING".equals(me.getMatchStatus()) || !"WAITING".equals(partner.getMatchStatus())) {
+            throw new IllegalStateException("매칭은 두 분 모두 'WAITING' 상태일 때만 가능합니다.");
+        }
 
         String newLinkCode = "MATCH-" + UUID.randomUUID().toString().substring(0, 8);
 
@@ -79,5 +81,48 @@ public class AdminService {
         if (partner != null) {
             partner.updateMatchInfo("WAITING", "WAIT-" + UUID.randomUUID().toString().substring(0, 6));
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecommendResponse> getRecommendList(Long seniorId) {
+        Senior me = seniorRepository.findById(seniorId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 어르신을 찾을 수 없습니다."));
+
+        List<Senior> candidates = seniorRepository.findAllByMatchStatusAndIdNot("WAITING", me.getId());
+
+        return candidates.stream()
+                .map(candidate -> {
+                    int score = calculateMatchScore(me, candidate);
+                    return RecommendResponse.builder()
+                            .seniorId(candidate.getId())
+                            .name(candidate.getName())
+                            .country(candidate.getCountry())
+                            .language(candidate.getLanguage())
+                            .matchScore(score)
+                            .build();
+                })
+                .sorted(Comparator.comparingInt(RecommendResponse::getMatchScore).reversed())
+                .limit(3)
+                .collect(Collectors.toList());
+    }
+
+    private int calculateMatchScore(Senior me, Senior candidate) {
+        int score = 0;
+
+        if (me.getCountry() != null && !me.getCountry().equals(candidate.getCountry())) {
+            score += 50;
+        }
+
+        if (me.getLanguage() != null && me.getLanguage().equals(candidate.getLanguage())) {
+            score += 30;
+        }
+
+        if (me.getHobbies() != null && candidate.getHobbies() != null) {
+            if(me.getHobbies().equals(candidate.getHobbies())) {
+                score += 10;
+            }
+        }
+
+        return score;
     }
 }

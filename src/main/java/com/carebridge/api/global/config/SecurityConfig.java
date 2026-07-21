@@ -48,6 +48,14 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
                 .requestMatchers("/", "/api/auth/**").permitAll()
+                .requestMatchers(
+                        "/",
+                        "/api/auth/**",
+                        "/swagger-ui/**",        // 스웨거 UI 화면
+                        "/v3/api-docs/**",       // 스웨거 JSON 데이터
+                        "/swagger-resources/**", // 스웨거 리소스
+                        "/webjars/**"            // 웹 리소스
+                ).permitAll()
 
                 .anyRequest().authenticated()
         );

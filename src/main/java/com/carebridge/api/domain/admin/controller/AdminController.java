@@ -1,5 +1,7 @@
 package com.carebridge.api.domain.admin.controller;
 
+import com.carebridge.api.domain.admin.dto.request.MatchConfirmRequest;
+import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
 import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
 import com.carebridge.api.domain.admin.service.AdminService;
 import com.carebridge.api.domain.senior.entity.Senior;
@@ -25,10 +27,18 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getSeniorList());
     }
 
+    @GetMapping("/seniors/{seniorId}/recommends")
+    public ResponseEntity<List<RecommendResponse>> getRecommends(@PathVariable Long seniorId) {
+        return ResponseEntity.ok(adminService.getRecommendList(seniorId));
+    }
+
     @PostMapping("/seniors/{seniorId}/match")
-    public ResponseEntity<String> matchSenior(@PathVariable Long seniorId) {
-        adminService.matchSenior(seniorId);
-        return ResponseEntity.ok("매칭이 성공적으로 완료되었습니다.");
+    public ResponseEntity<String> matchSenior(
+            @PathVariable Long seniorId,
+            @RequestBody MatchConfirmRequest request) {
+
+        adminService.matchSenior(seniorId, request.getPartnerId());
+        return ResponseEntity.ok("선택한 파트너와의 매칭이 성공적으로 완료되었습니다.");
     }
 
     @PostMapping("/seniors/{seniorId}/unmatch")
