@@ -12,4 +12,6 @@ public interface DangerSignalRepository extends JpaRepository<DangerSignal, Long
     List<DangerSignal> findAllByStatusOrderByCreatedAtDesc(DangerStatus status);
 
     List<DangerSignal> findAllBySeniorIdOrderByCreatedAtDesc(Long seniorId);
+
+    List<DangerSignal> findTop3BySeniorIdOrderByCreatedAtDesc(Long seniorId);
 }

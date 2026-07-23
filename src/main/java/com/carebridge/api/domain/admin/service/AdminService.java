@@ -30,7 +30,7 @@ public class AdminService {
 
             String partnerName = null;
             if ("MATCHED".equals(senior.getMatchStatus())) {
-                Senior partner = seniorRepository.findByLinkCodeAndIdNot(senior.getLinkCode(), senior.getId())
+                Senior partner = seniorRepository.findById(senior.getPartnerId())
                         .orElse(null);
                 partnerName = (partner != null) ? partner.getName() + " (" + partner.getCountry() + ")" : "정보 없음";
             }
@@ -58,10 +58,8 @@ public class AdminService {
             throw new IllegalStateException("매칭은 두 분 모두 'WAITING' 상태일 때만 가능합니다.");
         }
 
-        String newLinkCode = "MATCH-" + UUID.randomUUID().toString().substring(0, 8);
-
-        me.updateMatchInfo("MATCHED", newLinkCode);
-        partner.updateMatchInfo("MATCHED", newLinkCode);
+        me.updateMatchInfo("MATCHED", partner.getId());
+        partner.updateMatchInfo("MATCHED", me.getId());
     }
 
     @Transactional
@@ -73,14 +71,16 @@ public class AdminService {
             throw new IllegalStateException("이미 매칭 해제된(WAITING) 상태입니다.");
         }
 
-        Senior partner = seniorRepository.findByLinkCodeAndIdNot(me.getLinkCode(), me.getId())
-                .orElse(null);
+        if (me.getPartnerId() != null) {
+            Senior partner = seniorRepository.findById(me.getPartnerId())
+                    .orElse(null);
 
-        me.updateMatchInfo("WAITING", "WAIT-" + UUID.randomUUID().toString().substring(0, 6));
-
-        if (partner != null) {
-            partner.updateMatchInfo("WAITING", "WAIT-" + UUID.randomUUID().toString().substring(0, 6));
+            if (partner != null) {
+                partner.updateMatchInfo("WAITING", null);
+            }
         }
+
+        me.updateMatchInfo("WAITING", null);
     }
 
     @Transactional(readOnly = true)

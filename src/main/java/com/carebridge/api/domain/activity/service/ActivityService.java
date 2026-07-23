@@ -6,6 +6,8 @@ import com.carebridge.api.domain.activity.dto.response.ActivityRecordResponse;
 import com.carebridge.api.domain.activity.dto.response.GuardianDashboardResponse;
 import com.carebridge.api.domain.activity.entity.ActivityRecord;
 import com.carebridge.api.domain.activity.repository.ActivityRepository;
+import com.carebridge.api.domain.admin.entity.DangerSignal;
+import com.carebridge.api.domain.admin.repository.DangerSignalRepository;
 import com.carebridge.api.domain.guardian.entity.Guardian;
 import com.carebridge.api.domain.guardian.repository.GuardianRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
@@ -28,6 +30,7 @@ public class ActivityService {
     private final SeniorRepository seniorRepository;
     private final GuardianRepository guardianRepository;
     private final S3Uploader s3Uploader;
+    private final DangerSignalRepository dangerSignalRepository;
 
     @Transactional
     public void saveActivity(Long seniorId, ActivitySaveRequest request, MultipartFile audioFile) {
@@ -78,13 +81,11 @@ public class ActivityService {
         }
 
         List<ActivityRecord> records = activityRepository.findAllBySeniorIdOrderByCreatedAtDesc(senior.getId());
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         List<ActivityDto> activityDtos = records.stream().map(record -> {
             String summary = String.format("인지 활동 게임 진행 - 점수: %d점, 플레이 시간: %d초",
                     record.getScore(), record.getPlayTimeSeconds());
-
             return ActivityDto.builder()
                     .id(record.getId())
                     .date(record.getCreatedAt() != null ? record.getCreatedAt().format(formatter) : "")
@@ -96,11 +97,23 @@ public class ActivityService {
 
         int calculatedGardenLevel = (records.size() / 5) + 1;
 
+        List<DangerSignal> signals = dangerSignalRepository.findTop3BySeniorIdOrderByCreatedAtDesc(senior.getId());
+        List<GuardianDashboardResponse.DangerSignalDto> signalDtos = signals.stream()
+                .map(signal -> GuardianDashboardResponse.DangerSignalDto.builder()
+                        .signalId(signal.getId())
+                        .dangerType(signal.getDangerType().name())
+                        .description(signal.getDescription())
+                        .createdAt(signal.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
         return GuardianDashboardResponse.builder()
                 .seniorName(senior.getName())
                 .sentiment("Sunny")
                 .gardenLevel(calculatedGardenLevel)
                 .activities(activityDtos)
+                .lastActiveAt(senior.getLastActiveAt())
+                .recentDangerSignals(signalDtos)
                 .build();
     }
 }
