@@ -29,7 +29,7 @@ public class AdminService {
             }
 
             String partnerName = null;
-            if ("MATCHED".equals(senior.getMatchStatus())) {
+            if ("MATCHED".equals(senior.getMatchStatus()) && senior.getPartnerId() != null) {
                 Senior partner = seniorRepository.findById(senior.getPartnerId())
                         .orElse(null);
                 partnerName = (partner != null) ? partner.getName() + " (" + partner.getCountry() + ")" : "정보 없음";
