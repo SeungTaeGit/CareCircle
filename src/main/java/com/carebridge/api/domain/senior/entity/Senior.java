@@ -51,6 +51,9 @@ public class Senior extends BaseTimeEntity {
     @Column(name = "last_active_at")
     private LocalDateTime lastActiveAt;
 
+    @Column(nullable = false)
+    private int xp = 0;
+
     @Builder
     public Senior(String name, String contact, String gender, String birthDate,
                   String country, String language, String hobbies,
@@ -74,5 +77,9 @@ public class Senior extends BaseTimeEntity {
 
     public void updateLastActiveAt() {
         this.lastActiveAt = LocalDateTime.now();
+    }
+
+    public void addXp(int amount) {
+        this.xp += amount;
     }
 }

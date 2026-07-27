@@ -1,5 +1,6 @@
 package com.carebridge.api.global.exception;
 
+import com.carebridge.api.domain.mission.exception.MissionNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MissionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMissionNotFoundException(MissionNotFoundException e) {
+        log.warn("🚨 [미션 예외 감지] {}", e.getMessage());
+
+        ErrorResponse response = new ErrorResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {

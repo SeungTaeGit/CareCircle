@@ -38,4 +38,12 @@ public class S3Uploader {
 
         return amazonS3Client.getUrl(bucket, uniqueFileName).toString();
     }
+
+    /* [TODO: 기술 부채] 파일 업로드 API 일관성 맞추기
+
+    현황: 기존 교류 메시지 기능은 통합 업로드(A방식), 신규 미션 기능은 분리 업로드(B방식)로 파편화되어 있음.
+
+    목표: 추후 프론트엔드 코드 정비 시, 모든 파일 업로드를 FileController를 거치도록 B방식으로 통일할 것.
+
+     */
 }
