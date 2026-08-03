@@ -84,6 +84,82 @@ public class ExchangeMessageService {
         }
     }
 
+    @Transactional
+    public void sendTextMessage(Long senderId, ExchangeMessageRequest request) {
+        Senior sender = getSeniorById(senderId);
+        Senior receiver = getSeniorById(request.getReceiverId());
+        validateSenderAndReceiver(sender, receiver);
+
+        sender.updateLastActiveAt();
+
+        if (request.getContent() == null || request.getContent().isBlank()) {
+            throw new IllegalArgumentException("텍스트 내용이 필수입니다.");
+        }
+
+        try {
+            String targetLanguage = determineTargetLanguage(receiver);
+
+            AiResultDto aiResult = careAiService.analyzeText(request.getContent(), targetLanguage);
+
+            if (aiResult.isHarmful()) {
+                throw new IllegalArgumentException("부적절한 표현이 감지되어 메시지가 전송되지 않았습니다.");
+            }
+
+            ExchangeMessage message = ExchangeMessage.builder()
+                    .sender(sender)
+                    .receiver(receiver)
+                    .messageType("TEXT")
+                    .content(request.getContent())
+                    .translatedContent(aiResult.getTranslatedText())
+                    .status("UNREAD")
+                    .build();
+
+            exchangeMessageRepository.save(message);
+
+        } catch (Exception e) {
+            log.error("텍스트 메시지 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void sendImageMessage(Long senderId, ExchangeMessageRequest request, MultipartFile imageFile) {
+        Senior sender = getSeniorById(senderId);
+        Senior receiver = getSeniorById(request.getReceiverId());
+        validateSenderAndReceiver(sender, receiver);
+
+        sender.updateLastActiveAt();
+
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new IllegalArgumentException("이미지 파일이 필수입니다.");
+        }
+
+        String uploadedImageUrl = s3Uploader.upload(imageFile, "exchange-images");
+
+        try {
+            String targetLanguage = determineTargetLanguage(receiver);
+
+            String originalContent = request.getContent() != null ? request.getContent() : "사진을 보냈습니다.";
+            AiResultDto aiResult = careAiService.analyzeText(originalContent, targetLanguage);
+
+            ExchangeMessage message = ExchangeMessage.builder()
+                    .sender(sender)
+                    .receiver(receiver)
+                    .messageType("IMAGE")
+                    .content(originalContent)
+                    .translatedContent(aiResult.getTranslatedText())
+                    .imageUrl(uploadedImageUrl)
+                    .status("UNREAD")
+                    .build();
+
+            exchangeMessageRepository.save(message);
+
+        } catch (Exception e) {
+            log.error("이미지 메시지 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<ExchangeMessageResponse> getReceivedMessages(String receiverIdString) {
 
@@ -102,5 +178,24 @@ public class ExchangeMessageService {
                 .orElseThrow(() -> new IllegalArgumentException("메시지를 찾을 수 없습니다."));
 
         message.changeStatus("READ");
+    }
+
+    private Senior getSeniorById(Long id) {
+        return seniorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("어르신 정보를 찾을 수 없습니다. (ID: " + id + ")"));
+    }
+
+    private void validateSenderAndReceiver(Senior sender, Senior receiver) {
+        if (sender.getId().equals(receiver.getId())) {
+            throw new IllegalArgumentException("자기 자신에게는 메시지를 보낼 수 없습니다.");
+        }
+    }
+
+    private String determineTargetLanguage(Senior receiver) {
+        String targetLanguage = receiver.getLanguage();
+        if (targetLanguage == null || targetLanguage.isBlank()) {
+            return "JP".equalsIgnoreCase(receiver.getCountry()) ? "일본어" : "한국어";
+        }
+        return targetLanguage;
     }
 }

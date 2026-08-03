@@ -32,6 +32,27 @@ public class ExchangeMessageController {
         return ResponseEntity.ok("메시지가 성공적으로 전송되었습니다.");
     }
 
+    @PostMapping("/text")
+    public ResponseEntity<String> sendTextMessage(
+            @AuthenticationPrincipal String loginId,
+            @RequestBody ExchangeMessageRequest request) {
+
+        Long senderId = Long.parseLong(loginId);
+        exchangeMessageService.sendTextMessage(senderId, request);
+        return ResponseEntity.ok("텍스트 메시지가 성공적으로 전송되었습니다.");
+    }
+
+    @PostMapping("/image")
+    public ResponseEntity<String> sendImageMessage(
+            @AuthenticationPrincipal String loginId,
+            @RequestPart(value = "imageFile") MultipartFile imageFile,
+            @RequestPart(value = "data") ExchangeMessageRequest request) {
+
+        Long senderId = Long.parseLong(loginId);
+        exchangeMessageService.sendImageMessage(senderId, request, imageFile);
+        return ResponseEntity.ok("이미지 메시지가 성공적으로 전송되었습니다.");
+    }
+
     @GetMapping("/received")
     public ResponseEntity<List<ExchangeMessageResponse>> getReceivedMessages(
             Authentication authentication) {

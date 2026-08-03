@@ -9,4 +9,5 @@ public class ExchangeMessageRequest {
     private Long receiverId;
     private String messageType;
     private String content;
+    private String imageUrl;
 }

@@ -15,6 +15,7 @@ public class ExchangeMessageResponse {
     private LocalDateTime createdAt;
     private String audioUrl;
     private String translatedContent;
+    private String imageUrl;
 
     public ExchangeMessageResponse(ExchangeMessage message) {
         this.messageId = message.getId();
@@ -25,5 +26,6 @@ public class ExchangeMessageResponse {
         this.createdAt = message.getCreatedAt();
         this.audioUrl = message.getAudioUrl();
         this.translatedContent = message.getTranslatedContent();
+        this.imageUrl = message.getImageUrl();
     }
 }

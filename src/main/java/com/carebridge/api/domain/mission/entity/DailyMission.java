@@ -45,6 +45,12 @@ public class DailyMission {
 
     private LocalDateTime completedAt;
 
+    @Column(length = 50)
+    private String emotion;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiComment;
+
     @Builder
     public DailyMission(Senior senior, MissionTemplate missionTemplate, String customTitle, String customContent) {
         this.senior = senior;
@@ -59,6 +65,14 @@ public class DailyMission {
         this.status = MissionStatus.COMPLETED;
         this.audioUrl = audioUrl;
         this.sttResult = sttResult;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void completeTextMission(String textResult, String emotion, String aiComment) {
+        this.status = MissionStatus.COMPLETED;
+        this.sttResult = textResult;
+        this.emotion = emotion;
+        this.aiComment = aiComment;
         this.completedAt = LocalDateTime.now();
     }
 

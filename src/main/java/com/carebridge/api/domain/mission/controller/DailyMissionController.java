@@ -1,6 +1,7 @@
 package com.carebridge.api.domain.mission.controller;
 
 import com.carebridge.api.domain.mission.dto.request.MissionCompleteRequest;
+import com.carebridge.api.domain.mission.dto.request.TextMissionCompleteRequest;
 import com.carebridge.api.domain.mission.dto.response.DailyMissionResponse;
 import com.carebridge.api.domain.mission.entity.DailyMission;
 import com.carebridge.api.domain.mission.service.DailyMissionService;
@@ -36,6 +37,15 @@ public class DailyMissionController {
 
         dailyMissionService.completeMission(missionId, request.getAudioUrl(), request.getSttResult());
         return ResponseEntity.ok("미션이 완료되었습니다.");
+    }
+
+    @PostMapping("/{missionId}/complete/text")
+    public ResponseEntity<String> completeTextMission(
+            @PathVariable Long missionId,
+            @RequestBody TextMissionCompleteRequest request) {
+
+        dailyMissionService.completeTextMission(missionId, request.getTextResult());
+        return ResponseEntity.ok("텍스트 미션이 완료되었습니다.");
     }
 
     @PostMapping("/{missionId}/skip")
