@@ -19,7 +19,7 @@ public class ExchangeMessageController {
 
     private final ExchangeMessageService exchangeMessageService;
 
-    @PostMapping
+    @PostMapping("/voice")
     public ResponseEntity<String> sendMessage(
             @AuthenticationPrincipal String loginId,
             @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,

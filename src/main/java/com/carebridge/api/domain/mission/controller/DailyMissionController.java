@@ -2,6 +2,7 @@ package com.carebridge.api.domain.mission.controller;
 
 import com.carebridge.api.domain.mission.dto.request.MissionCompleteRequest;
 import com.carebridge.api.domain.mission.dto.request.TextMissionCompleteRequest;
+import com.carebridge.api.domain.mission.dto.response.AiMissionEvaluationResponse;
 import com.carebridge.api.domain.mission.dto.response.DailyMissionResponse;
 import com.carebridge.api.domain.mission.entity.DailyMission;
 import com.carebridge.api.domain.mission.service.DailyMissionService;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,17 +42,19 @@ public class DailyMissionController {
     }
 
     @PostMapping("/{missionId}/complete/text")
-    public ResponseEntity<String> completeTextMission(
+    public ResponseEntity<AiMissionEvaluationResponse> completeTextMission(
             @PathVariable Long missionId,
             @RequestBody TextMissionCompleteRequest request) {
 
-        dailyMissionService.completeTextMission(missionId, request.getTextResult());
-        return ResponseEntity.ok("텍스트 미션이 완료되었습니다.");
+        AiMissionEvaluationResponse response = dailyMissionService.completeTextMission(missionId, request.getTextResult());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{missionId}/skip")
-    public ResponseEntity<String> skipMission(@PathVariable Long missionId) {
+    public ResponseEntity<Map<String, String>> skipMission(@PathVariable Long missionId) {
         dailyMissionService.skipMission(missionId);
-        return ResponseEntity.ok("미션을 건너뛰었습니다.");
+
+        return ResponseEntity.ok(Map.of("message", "미션을 건너뛰었습니다."));
     }
 }

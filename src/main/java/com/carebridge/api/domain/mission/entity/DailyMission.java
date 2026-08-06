@@ -80,4 +80,11 @@ public class DailyMission {
         this.status = MissionStatus.SKIPPED;
         this.completedAt = LocalDateTime.now();
     }
+
+    public String getMissionQuestion() {
+        if (this.missionTemplate != null) {
+            return this.missionTemplate.getTitle();
+        }
+        return this.customContent != null ? this.customContent : this.customTitle;
+    }
 }

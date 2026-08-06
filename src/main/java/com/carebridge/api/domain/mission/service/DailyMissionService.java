@@ -55,7 +55,7 @@ public class DailyMissionService {
     public AiMissionEvaluationResponse completeTextMission(Long dailyMissionId, String textResult) {
         DailyMission mission = getPendingMission(dailyMissionId);
 
-        String missionTitle = mission.getMissionTemplate().getTitle();
+        String missionTitle = mission.getMissionQuestion();
 
         AiMissionEvaluationResponse aiResponse = careAiService.evaluateMissionText(missionTitle, textResult);
 

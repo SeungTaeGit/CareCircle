@@ -19,12 +19,14 @@ public class DailyMissionResponse {
     private LocalDateTime assignedAt;
 
     public static DailyMissionResponse from(DailyMission mission) {
+        boolean hasTemplate = mission.getMissionTemplate() != null;
+
         return DailyMissionResponse.builder()
                 .missionId(mission.getId())
-                .title(mission.getMissionTemplate().getTitle())
-                .missionType(mission.getMissionTemplate().getType().name())
+                .title(hasTemplate ? mission.getMissionTemplate().getTitle() : mission.getCustomContent())
+                .missionType(hasTemplate ? mission.getMissionTemplate().getType().name() : "CUSTOM")
                 .status(mission.getStatus())
-                .rewardXp(mission.getMissionTemplate().getRewardXp())
+                .rewardXp(hasTemplate ? mission.getMissionTemplate().getRewardXp() : 10)
                 .assignedAt(mission.getAssignedAt())
                 .build();
     }
