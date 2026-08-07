@@ -2,6 +2,7 @@ package com.carebridge.api.domain.admin.controller;
 
 import com.carebridge.api.domain.admin.dto.request.MatchConfirmRequest;
 import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
+import com.carebridge.api.domain.admin.dto.response.SeniorDashboardResponse;
 import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
 import com.carebridge.api.domain.admin.service.AdminService;
 import com.carebridge.api.domain.senior.entity.Senior;
@@ -45,5 +46,10 @@ public class AdminController {
     public ResponseEntity<String> unmatchSenior(@PathVariable Long seniorId) {
         adminService.unmatchSenior(seniorId);
         return ResponseEntity.ok("매칭이 성공적으로 해제되었습니다.");
+    }
+
+    @GetMapping("/dashboard/seniors")
+    public ResponseEntity<List<SeniorDashboardResponse>> getDashboardSeniors() {
+        return ResponseEntity.ok(adminService.getDashboardSeniors());
     }
 }

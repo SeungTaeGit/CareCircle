@@ -1,7 +1,10 @@
 package com.carebridge.api.domain.admin.service;
 
 import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
+import com.carebridge.api.domain.admin.dto.response.SeniorDashboardResponse;
 import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
+import com.carebridge.api.domain.mission.entity.DailyMission;
+import com.carebridge.api.domain.mission.repository.DailyMissionRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +23,7 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final SeniorRepository seniorRepository;
+    private final DailyMissionRepository dailyMissionRepository;
 
     @Transactional(readOnly = true)
     public List<SeniorListResponse> getSeniorList() {
@@ -124,5 +129,45 @@ public class AdminService {
         }
 
         return score;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SeniorDashboardResponse> getDashboardSeniors() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfWeek = today.with(java.time.DayOfWeek.MONDAY).atStartOfDay();
+        LocalDateTime endOfWeek = today.with(java.time.DayOfWeek.SUNDAY).atTime(23, 59, 59);
+
+        return seniorRepository.findAll().stream().map(senior -> {
+            int age = 0;
+            if (senior.getBirthDate() != null && senior.getBirthDate().length() >= 4) {
+                age = today.getYear() - Integer.parseInt(senior.getBirthDate().substring(0, 4));
+            }
+
+            List<DailyMission> thisWeekMissions = dailyMissionRepository
+                    .findBySeniorIdAndAssignedAtBetween(senior.getId(), startOfWeek, endOfWeek);
+
+            int completedCount = (int) thisWeekMissions.stream()
+                    .filter(m -> m.getStatus() == com.carebridge.api.domain.mission.enums.MissionStatus.COMPLETED)
+                    .count();
+
+            List<String> emotions = thisWeekMissions.stream()
+                    .filter(m -> m.getEmotion() != null)
+                    .map(DailyMission::getEmotion)
+                    .limit(5)
+                    .collect(Collectors.toList());
+
+            return SeniorDashboardResponse.builder()
+                    .seniorId(senior.getId())
+                    .name(senior.getName())
+                    .gender(senior.getGender())
+                    .age(age)
+                    .lastActiveAt(senior.getLastActiveAt())
+                    .thisWeekCompletedCount(completedCount)
+                    .thisWeekTotalCount(thisWeekMissions.size())
+                    .recentEmotions(emotions)
+                    .interestLevel(senior.getInterestLevel())
+                    .recommendedAction(senior.getRecommendedAction())
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

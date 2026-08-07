@@ -1,6 +1,7 @@
 package com.carebridge.api.domain.senior.entity;
 
 import com.carebridge.api.domain.admin.entity.Admin;
+import com.carebridge.api.domain.senior.enums.InterestLevel;
 import com.carebridge.api.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -54,6 +55,13 @@ public class Senior extends BaseTimeEntity {
     @Column(nullable = false)
     private int xp = 0;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private InterestLevel interestLevel = InterestLevel.NONE;
+
+    @Column(length = 100)
+    private String recommendedAction = "-";
+
     @Builder
     public Senior(String name, String contact, String gender, String birthDate,
                   String country, String language, String hobbies,
@@ -81,5 +89,10 @@ public class Senior extends BaseTimeEntity {
 
     public void addXp(int amount) {
         this.xp += amount;
+    }
+
+    public void updateInterestLevel(InterestLevel level, String recommendedAction) {
+        this.interestLevel = level;
+        this.recommendedAction = recommendedAction;
     }
 }
