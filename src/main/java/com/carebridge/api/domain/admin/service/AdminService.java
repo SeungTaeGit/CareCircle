@@ -1,8 +1,7 @@
 package com.carebridge.api.domain.admin.service;
 
-import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
-import com.carebridge.api.domain.admin.dto.response.SeniorDashboardResponse;
-import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
+import com.carebridge.api.domain.admin.dto.response.*;
+import com.carebridge.api.domain.exchange.repository.ExchangeMessageRepository;
 import com.carebridge.api.domain.mission.entity.DailyMission;
 import com.carebridge.api.domain.mission.repository.DailyMissionRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
@@ -24,6 +23,7 @@ public class AdminService {
 
     private final SeniorRepository seniorRepository;
     private final DailyMissionRepository dailyMissionRepository;
+    private final ExchangeMessageRepository exchangeMessageRepository;
 
     @Transactional(readOnly = true)
     public List<SeniorListResponse> getSeniorList() {
@@ -47,6 +47,7 @@ public class AdminService {
                     .hobbies(senior.getHobbies())
                     .matchStatus(senior.getMatchStatus())
                     .partnerName(partnerName)
+                    .country(senior.getCountry())
                     .build();
         }).collect(Collectors.toList());
     }
@@ -169,5 +170,50 @@ public class AdminService {
                     .recommendedAction(senior.getRecommendedAction())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public SeniorDetailResponse getSeniorDetail(Long seniorId) {
+        Senior senior = seniorRepository.findById(seniorId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 어르신을 찾을 수 없습니다. ID: " + seniorId));
+
+        return SeniorDetailResponse.from(senior);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExchangeHistoryResponse> getExchangeHistory(Long seniorId) {
+        return exchangeMessageRepository.findAllBySenderIdOrReceiverIdOrderByCreatedAtDesc(seniorId, seniorId)
+                .stream()
+                .map(ExchangeHistoryResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public MissionResultResponse getMissionResult(Long missionId) {
+        DailyMission mission = dailyMissionRepository.findById(missionId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 미션을 찾을 수 없습니다. ID: " + missionId));
+
+        return MissionResultResponse.from(mission);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardSummaryResponse getDashboardSummary() {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+
+        List<DailyMission> todayMissions = dailyMissionRepository.findByAssignedAtBetween(startOfDay, endOfDay);
+
+        int total = todayMissions.size();
+        int completed = (int) todayMissions.stream()
+                .filter(m -> m.getStatus() == com.carebridge.api.domain.mission.enums.MissionStatus.COMPLETED)
+                .count();
+
+        double rate = (total == 0) ? 0.0 : Math.round(((double) completed / total) * 1000.0) / 10.0;
+
+        return DashboardSummaryResponse.builder()
+                .todayTotalMissions(total)
+                .todayCompletedMissions(completed)
+                .participationRate(rate)
+                .build();
     }
 }

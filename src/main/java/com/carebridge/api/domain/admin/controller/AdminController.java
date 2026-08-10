@@ -1,9 +1,7 @@
 package com.carebridge.api.domain.admin.controller;
 
 import com.carebridge.api.domain.admin.dto.request.MatchConfirmRequest;
-import com.carebridge.api.domain.admin.dto.response.RecommendResponse;
-import com.carebridge.api.domain.admin.dto.response.SeniorDashboardResponse;
-import com.carebridge.api.domain.admin.dto.response.SeniorListResponse;
+import com.carebridge.api.domain.admin.dto.response.*;
 import com.carebridge.api.domain.admin.service.AdminService;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
@@ -51,5 +49,25 @@ public class AdminController {
     @GetMapping("/dashboard/seniors")
     public ResponseEntity<List<SeniorDashboardResponse>> getDashboardSeniors() {
         return ResponseEntity.ok(adminService.getDashboardSeniors());
+    }
+
+    @GetMapping("/seniors/{seniorId}")
+    public ResponseEntity<SeniorDetailResponse> getSeniorDetail(@PathVariable Long seniorId) {
+        return ResponseEntity.ok(adminService.getSeniorDetail(seniorId));
+    }
+
+    @GetMapping("/exchange/{seniorId}/history")
+    public ResponseEntity<List<ExchangeHistoryResponse>> getExchangeHistory(@PathVariable Long seniorId) {
+        return ResponseEntity.ok(adminService.getExchangeHistory(seniorId));
+    }
+
+    @GetMapping("/missions/{missionId}/result")
+    public ResponseEntity<MissionResultResponse> getMissionResult(@PathVariable Long missionId) {
+        return ResponseEntity.ok(adminService.getMissionResult(missionId));
+    }
+
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<DashboardSummaryResponse> getDashboardSummary() {
+        return ResponseEntity.ok(adminService.getDashboardSummary());
     }
 }

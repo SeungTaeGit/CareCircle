@@ -12,4 +12,5 @@ public class SeniorListResponse {
     private String hobbies;
     private String matchStatus;
     private String partnerName;
+    private String country;
 }

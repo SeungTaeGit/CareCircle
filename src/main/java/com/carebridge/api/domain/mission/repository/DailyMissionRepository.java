@@ -18,4 +18,6 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
     List<DailyMission> findBySeniorIdAndAssignedAtBetween(Long seniorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
     List<DailyMission> findTop3BySeniorIdOrderByAssignedAtDesc(Long seniorId);
+
+    List<DailyMission> findByAssignedAtBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
 }
