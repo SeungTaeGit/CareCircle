@@ -81,6 +81,11 @@ public class DailyMission {
         this.completedAt = LocalDateTime.now();
     }
 
+    public void rejectMission(String textResult) {
+        this.status = MissionStatus.REJECTED;
+        this.sttResult = textResult;
+    }
+
     public String getMissionQuestion() {
         if (this.missionTemplate != null) {
             return this.missionTemplate.getTitle();

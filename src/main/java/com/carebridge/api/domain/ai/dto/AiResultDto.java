@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
 @Getter
 @NoArgsConstructor
 public class AiResultDto {
@@ -13,6 +11,10 @@ public class AiResultDto {
 
     @JsonProperty("isHarmful")
     private boolean isHarmful;
-    private Map<String, Integer> emotionWeights;
+
+    private String emotion; // FEAR_ANXIETY, ANGER, SADNESS, JOY, NEUTRAL 중 1
+
+    private String toxicCategory; // VERBAL_ABUSE, THREAT, NONE 등
+
     private String translatedText;
 }

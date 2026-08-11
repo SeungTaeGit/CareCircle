@@ -3,9 +3,12 @@ package com.carebridge.api.domain.mission.service;
 import com.carebridge.api.domain.ai.service.CareAiService;
 import com.carebridge.api.domain.mission.dto.response.AiMissionEvaluationResponse;
 import com.carebridge.api.domain.mission.entity.DailyMission;
+import com.carebridge.api.domain.mission.entity.ToxicExpressionLog;
 import com.carebridge.api.domain.mission.enums.MissionStatus;
+import com.carebridge.api.domain.mission.enums.ToxicCategory;
 import com.carebridge.api.domain.mission.exception.MissionNotFoundException;
 import com.carebridge.api.domain.mission.repository.DailyMissionRepository;
+import com.carebridge.api.domain.mission.repository.ToxicExpressionLogRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.enums.InterestLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class DailyMissionService {
 
     private final DailyMissionRepository dailyMissionRepository;
     private final CareAiService careAiService;
+    private final ToxicExpressionLogRepository toxicExpressionLogRepository;
 
     public List<DailyMission> getTodayMissions(Long seniorId) {
         LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
@@ -46,29 +50,6 @@ public class DailyMissionService {
         processReward(mission);
 
         evaluateAndUpdateSeniorInterestLevel(mission.getSenior());
-    }
-
-    @Transactional
-    public AiMissionEvaluationResponse completeTextMission(Long dailyMissionId, String textResult) {
-        DailyMission mission = getPendingMission(dailyMissionId);
-
-        String missionTitle = mission.getMissionQuestion();
-        AiMissionEvaluationResponse aiResponse = careAiService.evaluateMissionText(missionTitle, textResult);
-
-        if (aiResponse.isPass()) {
-            mission.completeTextMission(
-                    textResult,
-                    aiResponse.getEmotion(),
-                    aiResponse.getAiComment()
-            );
-            processReward(mission);
-
-            evaluateAndUpdateSeniorInterestLevel(mission.getSenior());
-        } else {
-            log.info("미션 통과 실패 - 미션 ID: {}, AI 코멘트: {}", dailyMissionId, aiResponse.getAiComment());
-        }
-
-        return aiResponse;
     }
 
     @Transactional
@@ -157,5 +138,69 @@ public class DailyMissionService {
         senior.updateInterestLevel(newLevel, newAction);
 
         log.info("어르신 ID: {} 의 상태 갱신 완료 - 수준: {}, 조치: {}", senior.getId(), newLevel, newAction);
+    }
+
+    @Transactional
+    public AiMissionEvaluationResponse completeTextMission(Long dailyMissionId, String textResult) {
+        DailyMission mission = getPendingMission(dailyMissionId);
+        String missionTitle = mission.getMissionQuestion();
+
+        AiMissionEvaluationResponse aiResponse = careAiService.evaluateMissionText(missionTitle, textResult);
+
+        if (aiResponse.isHarmful()) {
+            mission.rejectMission(textResult);
+
+            ToxicCategory category = ToxicCategory.valueOf(aiResponse.getToxicCategory());
+            ToxicExpressionLog toxicLog = ToxicExpressionLog.builder()
+                    .senior(mission.getSenior())
+                    .dailyMission(mission)
+                    .mainCategory(category)
+                    .detectedContent(textResult)
+                    .build();
+            toxicExpressionLogRepository.save(toxicLog);
+
+            updateSeniorStatusByToxic(mission.getSenior(), category);
+
+            log.warn("미션 반려됨 (유해표현) - 미션ID: {}, 카테고리: {}", dailyMissionId, category);
+            return aiResponse;
+        }
+
+        if (aiResponse.isPass()) {
+            mission.completeTextMission(
+                    textResult,
+                    aiResponse.getEmotion(),
+                    aiResponse.getAiComment()
+            );
+            processReward(mission);
+            evaluateAndUpdateSeniorInterestLevel(mission.getSenior());
+        }
+
+        return aiResponse;
+    }
+
+    private void updateSeniorStatusByToxic(Senior senior, ToxicCategory category) {
+        InterestLevel newLevel = senior.getInterestLevel();
+        String newAction = senior.getRecommendedAction();
+
+        switch (category) {
+            case CRISIS_ABUSE_SIGNAL:
+                newLevel = InterestLevel.URGENT;
+                newAction = "안전 SOP 즉시 적용, 유선 연락";
+                break;
+            case PRIVACY_FINANCIAL_RISK:
+            case THREAT:
+                newLevel = InterestLevel.CHECK;
+                newAction = "담당자 확인 권장";
+                break;
+            case VERBAL_ABUSE:
+            case IDENTITY_ATTACK:
+            case SEXUAL_RISK:
+                newLevel = InterestLevel.WATCH;
+                newAction = "주의 깊게 모니터링";
+                break;
+            default:
+                return;
+        }
+        senior.updateInterestLevel(newLevel, newAction);
     }
 }

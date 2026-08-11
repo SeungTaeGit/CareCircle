@@ -6,6 +6,9 @@ import com.carebridge.api.domain.exchange.dto.request.ExchangeMessageRequest;
 import com.carebridge.api.domain.exchange.dto.response.ExchangeMessageResponse;
 import com.carebridge.api.domain.exchange.entity.ExchangeMessage;
 import com.carebridge.api.domain.exchange.repository.ExchangeMessageRepository;
+import com.carebridge.api.domain.mission.entity.ToxicExpressionLog;
+import com.carebridge.api.domain.mission.enums.ToxicCategory;
+import com.carebridge.api.domain.mission.repository.ToxicExpressionLogRepository;
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import com.carebridge.api.global.util.S3Uploader;
@@ -27,6 +30,7 @@ public class ExchangeMessageService {
     private final SeniorRepository seniorRepository;
     private final S3Uploader s3Uploader;
     private final CareAiService careAiService;
+    private final ToxicExpressionLogRepository toxicExpressionLogRepository;
 
     @Transactional
     public void sendMessage(Long senderId, ExchangeMessageRequest request, MultipartFile audioFile) {
@@ -57,12 +61,10 @@ public class ExchangeMessageService {
 
             AiResultDto aiResult = careAiService.analyzeAudio(audioFile.getBytes(), targetLanguage);
 
-            log.info("📊 [대시보드 전송 데이터] {} 어르신의 감정 상태: {}", sender.getName(), aiResult.getEmotionWeights());
-
+            log.info("📊 [대시보드 전송 데이터] {} 어르신의 감정 상태: {}", sender.getName(), aiResult.getEmotion());
 
             if (aiResult.isHarmful()) {
-                log.warn("🚨 [차단됨] 부적절한 표현 감지! 원본 STT: {}", aiResult.getStt());
-                throw new IllegalArgumentException("부적절한 표현이 감지되어 메시지가 전송되지 않았습니다.");
+                handleHarmfulContent(sender, receiver, request.getMessageType(), aiResult.getStt(), null, uploadedAudioUrl, aiResult.getToxicCategory());
             }
 
             ExchangeMessage message = ExchangeMessage.builder()
@@ -78,6 +80,8 @@ public class ExchangeMessageService {
             exchangeMessageRepository.save(message);
             log.info("✅ [전송 완료] {} 번역본: {}", targetLanguage, aiResult.getTranslatedText());
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("메시지 처리 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
@@ -102,7 +106,7 @@ public class ExchangeMessageService {
             AiResultDto aiResult = careAiService.analyzeText(request.getContent(), targetLanguage);
 
             if (aiResult.isHarmful()) {
-                throw new IllegalArgumentException("부적절한 표현이 감지되어 메시지가 전송되지 않았습니다.");
+                handleHarmfulContent(sender, receiver, "TEXT", request.getContent(), null, null, aiResult.getToxicCategory());
             }
 
             ExchangeMessage message = ExchangeMessage.builder()
@@ -116,6 +120,8 @@ public class ExchangeMessageService {
 
             exchangeMessageRepository.save(message);
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("텍스트 메시지 처리 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
@@ -142,6 +148,10 @@ public class ExchangeMessageService {
             String originalContent = request.getContent() != null ? request.getContent() : "사진을 보냈습니다.";
             AiResultDto aiResult = careAiService.analyzeText(originalContent, targetLanguage);
 
+            if (aiResult.isHarmful()) {
+                handleHarmfulContent(sender, receiver, "IMAGE", originalContent, uploadedImageUrl, null, aiResult.getToxicCategory());
+            }
+
             ExchangeMessage message = ExchangeMessage.builder()
                     .sender(sender)
                     .receiver(receiver)
@@ -154,6 +164,8 @@ public class ExchangeMessageService {
 
             exchangeMessageRepository.save(message);
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("이미지 메시지 처리 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
@@ -162,11 +174,8 @@ public class ExchangeMessageService {
 
     @Transactional(readOnly = true)
     public List<ExchangeMessageResponse> getReceivedMessages(String receiverIdString) {
-
         Long receiverId = Long.parseLong(receiverIdString);
-
         List<ExchangeMessage> messages = exchangeMessageRepository.findAllByReceiverIdOrderByCreatedAtDesc(receiverId);
-
         return messages.stream()
                 .map(ExchangeMessageResponse::new)
                 .collect(Collectors.toList());
@@ -176,8 +185,40 @@ public class ExchangeMessageService {
     public void markAsRead(Long messageId) {
         ExchangeMessage message = exchangeMessageRepository.findById(messageId)
                 .orElseThrow(() -> new IllegalArgumentException("메시지를 찾을 수 없습니다."));
-
         message.changeStatus("READ");
+    }
+
+    private void handleHarmfulContent(Senior sender, Senior receiver, String messageType, String content, String imageUrl, String audioUrl, String toxicCategoryStr) {
+        ExchangeMessage rejectedMessage = ExchangeMessage.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .messageType(messageType)
+                .content(content)
+                .translatedContent("유해 표현으로 차단됨")
+                .audioUrl(audioUrl)
+                .imageUrl(imageUrl)
+                .status("REJECTED")
+                .build();
+        exchangeMessageRepository.save(rejectedMessage);
+
+        ToxicCategory category = ToxicCategory.NONE;
+        try {
+            category = ToxicCategory.valueOf(toxicCategoryStr);
+        } catch (Exception e) {
+            log.warn("알 수 없는 유해 카테고리: {}", toxicCategoryStr);
+        }
+
+        ToxicExpressionLog toxicLog = ToxicExpressionLog.builder()
+                .senior(sender)
+                .exchangeMessage(rejectedMessage)
+                .mainCategory(category)
+                .detectedContent(content)
+                .build();
+        toxicExpressionLogRepository.save(toxicLog);
+
+        log.warn("🚨 [차단됨] 부적절한 표현 감지! 원본 STT: {}, 카테고리: {}", content, category);
+
+        throw new IllegalArgumentException("말씀을 잘 이해하지 못했어요. 다시 한번 예쁘게 들려주시겠어요?");
     }
 
     private Senior getSeniorById(Long id) {

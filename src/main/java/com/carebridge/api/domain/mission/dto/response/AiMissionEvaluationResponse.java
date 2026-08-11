@@ -10,7 +10,10 @@ public class AiMissionEvaluationResponse {
 
     @JsonProperty("isPass")
     private boolean isPass;
-
     private String emotion;
     private String aiComment;
+
+    @JsonProperty("isHarmful")
+    private boolean isHarmful;
+    private String toxicCategory;
 }

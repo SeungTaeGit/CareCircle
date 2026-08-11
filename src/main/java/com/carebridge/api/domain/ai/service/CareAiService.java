@@ -37,11 +37,13 @@ public class CareAiService {
         while (attempt < maxRetries) {
             try {
                 String systemInstruction = """
-                        너는 노인 돌봄 서비스의 데이터 분석 AI야. 입력된 사용자의 원본 음성을 변형 없이 그대로 바탕으로 하여 아래 4가지 결과를 반드시 JSON 형식으로만 응답해줘.
+                        너는 노인 돌봄 서비스의 데이터 분석 AI야. 입력된 사용자의 원본 음성을 변형 없이 그대로 바탕으로 하여 아래 5가지 결과를 반드시 JSON 형식으로만 응답해줘.
+        
                         1. stt: 음성을 텍스트로 그대로 받아쓰기
-                        2. isHarmful: 원본 텍스트 내용이 욕설, 비하, 공격성 등 유해한지 여부 (boolean)
-                        3. emotionWeights: 원본 텍스트에서 느껴지는 실제 감정을 기쁨, 슬픔, 분노, 불안 4가지로 나누고, 총합이 100이 되도록 정수 비율로 응답해 (예: {"기쁨": 10, "슬픔": 10, "분노": 80, "불안": 0})
-                        4. translatedText: 원본 텍스트를 바탕으로 문맥을 살려 %s(으)로 자연스럽게 번역한 텍스트
+                        2. emotion: 텍스트에서 느껴지는 주된 감정. 무조건 다음 5개 중 하나만 선택해: [FEAR_ANXIETY, ANGER, SADNESS, JOY, NEUTRAL]
+                        3. isHarmful: 원본 텍스트 내용에 욕설, 위협, 개인정보/금전 요구, 위기 신호 등 유해한 내용이 포함되어 있는지 여부 (boolean)
+                        4. toxicCategory: 만약 isHarmful이 true라면 다음 6개 중 하나를 선택하고, false라면 "NONE"을 반환해: [VERBAL_ABUSE, THREAT, IDENTITY_ATTACK, SEXUAL_RISK, PRIVACY_FINANCIAL_RISK, CRISIS_ABUSE_SIGNAL]
+                        5. translatedText: 원본 텍스트를 바탕으로 문맥을 살려 %s(으)로 자연스럽게 번역한 텍스트
                         """.formatted(targetLanguage);
 
                 String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
@@ -89,11 +91,13 @@ public class CareAiService {
         while (attempt < maxRetries) {
             try {
                 String systemInstruction = """
-                        너는 노인 돌봄 서비스의 데이터 분석 AI야. 입력된 사용자의 텍스트를 바탕으로 아래 4가지 결과를 반드시 JSON 형식으로만 응답해줘.
+                        너는 노인 돌봄 서비스의 데이터 분석 AI야. 입력된 사용자의 텍스트를 바탕으로 아래 5가지 결과를 반드시 JSON 형식으로만 응답해줘.
+        
                         1. stt: 입력된 텍스트를 그대로 반환 (DTO 구조 유지를 위함)
-                        2. isHarmful: 텍스트 내용이 욕설, 비하, 공격성 등 유해한지 여부 (boolean)
-                        3. emotionWeights: 텍스트에서 느껴지는 실제 감정을 기쁨, 슬픔, 분노, 불안 4가지로 나누고, 총합이 100이 되도록 정수 비율로 응답해 (예: {"기쁨": 10, "슬픔": 10, "분노": 80, "불안": 0})
-                        4. translatedText: 원본 텍스트를 바탕으로 문맥을 살려 %s(으)로 자연스럽게 번역한 텍스트
+                        2. emotion: 텍스트에서 느껴지는 주된 감정. 무조건 다음 5개 중 하나만 선택해: [FEAR_ANXIETY, ANGER, SADNESS, JOY, NEUTRAL]
+                        3. isHarmful: 텍스트 내용에 욕설, 위협, 개인정보/금전 요구, 위기 신호 등 유해한 내용이 포함되어 있는지 여부 (boolean)
+                        4. toxicCategory: 만약 isHarmful이 true라면 다음 6개 중 하나를 선택하고, false라면 "NONE"을 반환해: [VERBAL_ABUSE, THREAT, IDENTITY_ATTACK, SEXUAL_RISK, PRIVACY_FINANCIAL_RISK, CRISIS_ABUSE_SIGNAL]
+                        5. translatedText: 원본 텍스트를 바탕으로 문맥을 살려 %s(으)로 자연스럽게 번역한 텍스트
                         """.formatted(targetLanguage);
 
                 String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
@@ -137,12 +141,14 @@ public class CareAiService {
         while (attempt < maxRetries) {
             try {
                 String systemInstruction = """
-                        너는 노인 돌봄 서비스의 따뜻하고 친절한 AI 전문가야. 어르신이 미션 주제에 맞게 답변했는지 의도와 문맥을 파악해서 아래 3가지 결과를 반드시 JSON 형식으로만 응답해줘.
-                        정답을 맞히는 것이 아니라, 주제에 대해 본인의 언어로 표현하고 교류하려는 의도가 있었는지를 기준으로 아주 관대하게 평가해.
+                        너는 노인 돌봄 서비스의 따뜻하고 친절한 AI 전문가야. 어르신이 미션 주제에 맞게 답변했는지 의도와 문맥을 파악해서 아래 5가지 결과를 반드시 JSON 형식으로만 응답해줘.
+                        가장 중요한 점: 정답을 맞히는 것이 아니라, 주제에 대해 본인의 언어로 표현하고 대화하려는 의도가 있었는지를 기준으로 '아주 관대하게' 통과(true) 처리해.
                         
-                        1. isPass: 어르신의 답변이 미션 주제와 연관이 있거나 의도에 부합하면 true, 아파서 대답을 못하겠다거나 전혀 엉뚱한 대답, 혹은 너무 짧아 파악이 안 되면 false (boolean)
-                        2. emotion: 답변에서 느껴지는 주된 감정 상태 (예: HAPPY, CALM, NOSTALGIC, SAD, CONFUSED 등 영어 단어 대문자로 1개)
-                        3. aiComment: 어르신에게 전달할 따뜻한 피드백. 통과(true)라면 공감과 칭찬을, 실패(false)라면 부드럽게 재시도를 권유하거나 위로하는 말을 작성해 (최대 50자)
+                        1. isPass: 어르신의 답변이 미션 주제와 조금이라도 연관이 있으면 무조건 true, 아예 침묵하거나 전혀 파악이 안 될 때만 false (boolean)
+                        2. emotion: 답변에서 느껴지는 주된 감정. 무조건 다음 5개 중 하나만 선택해: [FEAR_ANXIETY, ANGER, SADNESS, JOY, NEUTRAL]
+                        3. aiComment: 어르신에게 전달할 따뜻한 피드백 (최대 50자). 통과(true)라면 칭찬과 공감을, 유해한 내용(isHarmful=true)이라면 부드럽게 재시도를 유도해.
+                        4. isHarmful: 답변 내용에 욕설, 위협, 혐오, 개인정보 노출, 위기 신호 등 유해한 내용이 포함되어 있는지 여부 (boolean)
+                        5. toxicCategory: 만약 isHarmful이 true라면 다음 6개 중 하나를 선택하고, false라면 "NONE"을 반환해: [VERBAL_ABUSE, THREAT, IDENTITY_ATTACK, SEXUAL_RISK, PRIVACY_FINANCIAL_RISK, CRISIS_ABUSE_SIGNAL]
                         """;
 
                 String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
@@ -162,6 +168,8 @@ public class CareAiService {
 
                 JsonNode rootNode = objectMapper.readTree(responseJson);
                 String resultText = rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+
+                log.info("👀 [AI 원본 응답]: {}", resultText);
 
                 log.info("Gemini AI 미션 평가 성공 (주제: {})", missionTitle);
 
