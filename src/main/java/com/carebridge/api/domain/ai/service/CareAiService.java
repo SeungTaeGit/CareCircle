@@ -187,4 +187,52 @@ public class CareAiService {
         }
         throw new RuntimeException("AI 미션 평가 중 오류가 발생했습니다.");
     }
+
+    public String generateWeeklyReport(String seniorName, String activityData) {
+        int maxRetries = 3;
+        int attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                String systemInstruction = """
+                        너는 노인 돌봄 서비스의 따뜻하고 전문적인 복지사야.
+                        아래 제공되는 어르신의 지난주 '미션 참여 기록'과 '교류 활동(채팅) 감정 데이터'를 바탕으로, 
+                        보호자에게 전달할 주간 요약 리포트를 작성해줘.
+                        
+                        [작성 가이드]
+                        1. 보호자에게 다정하고 안심이 되는 어조로 작성할 것 (예: ~하셨습니다, ~하는 모습을 보이셨어요)
+                        2. 어르신의 주된 감정 상태(기쁨, 슬픔 등)와 활동 참여도를 자연스럽게 요약할 것
+                        3. 부정적인 감정(우울, 불안)이 있었다면 너무 심각하지 않게 부드럽게 전달하고, 복지사가 잘 케어하고 있다는 뉘앙스를 줄 것
+                        4. 길이는 200~300자 내외의 일반 텍스트로 작성할 것 (JSON 절대 금지)
+                        """;
+
+                String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
+
+                Map<String, Object> requestBody = new HashMap<>();
+                String promptContext = systemInstruction + "\n\n[어르신 이름]: " + seniorName + "\n[활동 데이터]:\n" + activityData;
+                Map<String, Object> part = Map.of("text", promptContext);
+
+                requestBody.put("contents", List.of(Map.of("parts", List.of(part))));
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+                String responseJson = restTemplate.postForObject(url, requestEntity, String.class);
+                JsonNode rootNode = objectMapper.readTree(responseJson);
+
+                String reportText = rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+                return reportText.trim();
+
+            } catch (Exception e) {
+                attempt++;
+                log.warn("AI 리포트 생성 실패 (시도 {}/{}): {}", attempt, maxRetries, e.getMessage());
+                if (attempt >= maxRetries) {
+                    throw new RuntimeException("AI 리포트 생성 중 오류가 발생했습니다.");
+                }
+                try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            }
+        }
+        return "리포트 생성에 실패했습니다.";
+    }
 }

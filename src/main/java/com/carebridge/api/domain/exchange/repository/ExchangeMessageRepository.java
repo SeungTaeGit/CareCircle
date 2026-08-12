@@ -7,7 +7,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ExchangeMessageRepository extends JpaRepository<ExchangeMessage, Long> {
+
     List<ExchangeMessage> findAllByReceiverIdOrderByCreatedAtDesc(Long receiverId);
+
     List<ExchangeMessage> findAllByStatusAndCreatedAtBefore(String status, LocalDateTime time);
+
     List<ExchangeMessage> findAllBySenderIdOrReceiverIdOrderByCreatedAtDesc(Long senderId, Long receiverId);
+
+    List<ExchangeMessage> findBySenderIdAndCreatedAtBetween(Long senderId, LocalDateTime start, LocalDateTime end);
 }
