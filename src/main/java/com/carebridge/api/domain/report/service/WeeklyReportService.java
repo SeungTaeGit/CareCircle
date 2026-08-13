@@ -106,4 +106,16 @@ public class WeeklyReportService {
 
         report.markAsSent();
     }
+
+    @Transactional
+    public void updateReportContent(Long reportId, String newContent) {
+        WeeklyReport report = weeklyReportRepository.findById(reportId)
+                .orElseThrow(() -> new IllegalArgumentException("리포트를 찾을 수 없습니다."));
+
+        if (report.getStatus() == com.carebridge.api.domain.report.enums.ReportStatus.SENT) {
+            throw new IllegalStateException("이미 보호자에게 전송된 리포트는 수정할 수 없습니다.");
+        }
+
+        report.updateReportContent(newContent);
+    }
 }

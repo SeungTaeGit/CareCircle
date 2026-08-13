@@ -48,4 +48,8 @@ public class WeeklyReport extends BaseTimeEntity {
     public void markAsSent() {
         this.status = ReportStatus.SENT;
     }
+
+    public void updateReportContent(String newContent) {
+        this.reportContent = newContent;
+    }
 }

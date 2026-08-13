@@ -119,20 +119,17 @@ public class DailyMissionService {
         }
 
         InterestLevel newLevel = InterestLevel.NONE;
-        String newAction = "-";
+        String newAction = "특이사항 없음";
 
         if (hasUrgent) {
             newLevel = InterestLevel.URGENT;
-            newAction = "안전 SOP 즉시 적용";
-        } else if (negativeEmotionCount >= 2) {
+            newAction = "즉각적인 안전 확인 필요";
+        } else if (negativeEmotionCount >= 2 || hasConsecutiveSkips) {
             newLevel = InterestLevel.CHECK;
-            newAction = "안부 확인 권장";
-        } else if (hasConsecutiveSkips) {
-            newLevel = InterestLevel.CHECK;
-            newAction = "참여 권유 권장";
+            newAction = "안부 확인 및 참여 권장";
         } else if (hasLonely) {
             newLevel = InterestLevel.WATCH;
-            newAction = "추세 관찰";
+            newAction = "가벼운 추세 관찰";
         }
 
         senior.updateInterestLevel(newLevel, newAction);
@@ -185,18 +182,18 @@ public class DailyMissionService {
         switch (category) {
             case CRISIS_ABUSE_SIGNAL:
                 newLevel = InterestLevel.URGENT;
-                newAction = "안전 SOP 즉시 적용, 유선 연락";
+                newAction = "즉각적인 안전 확인 필요";
                 break;
             case PRIVACY_FINANCIAL_RISK:
             case THREAT:
                 newLevel = InterestLevel.CHECK;
-                newAction = "담당자 확인 권장";
+                newAction = "안부 확인 및 참여 권장";
                 break;
             case VERBAL_ABUSE:
             case IDENTITY_ATTACK:
             case SEXUAL_RISK:
                 newLevel = InterestLevel.WATCH;
-                newAction = "주의 깊게 모니터링";
+                newAction = "가벼운 추세 관찰";
                 break;
             default:
                 return;

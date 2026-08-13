@@ -43,8 +43,11 @@ public class ExchangeMessage extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String translatedContent;
 
+    @Column(length = 20)
+    private String emotion;
+
     @Builder
-    public ExchangeMessage(Senior sender, Senior receiver, String messageType, String content, String status, String audioUrl, String imageUrl, String translatedContent) {
+    public ExchangeMessage(Senior sender, Senior receiver, String messageType, String content, String status, String audioUrl, String imageUrl, String translatedContent, String emotion) {
         this.sender = sender;
         this.receiver = receiver;
         this.messageType = messageType;
@@ -53,6 +56,7 @@ public class ExchangeMessage extends BaseTimeEntity {
         this.audioUrl = audioUrl;
         this.imageUrl = imageUrl;
         this.translatedContent = translatedContent;
+        this.emotion = emotion;
     }
 
     public void changeStatus(String newStatus) {

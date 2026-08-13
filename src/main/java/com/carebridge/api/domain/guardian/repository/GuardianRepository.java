@@ -11,4 +11,6 @@ public interface GuardianRepository extends JpaRepository<Guardian, Long> {
     boolean existsByEmail(String email);
 
     Optional<Guardian> findByEmail(String email);
+
+    List<Guardian> findBySeniorId(Long seniorId);
 }

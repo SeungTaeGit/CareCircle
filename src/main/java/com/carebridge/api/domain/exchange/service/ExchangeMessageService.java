@@ -77,6 +77,7 @@ public class ExchangeMessageService {
                     .translatedContent(aiResult.getTranslatedText())
                     .audioUrl(uploadedAudioUrl)
                     .status("UNREAD")
+                    .emotion(aiResult.getEmotion())
                     .build();
 
             exchangeMessageRepository.save(message);
@@ -120,6 +121,7 @@ public class ExchangeMessageService {
                     .content(request.getContent())
                     .translatedContent(aiResult.getTranslatedText())
                     .status("UNREAD")
+                    .emotion(aiResult.getEmotion())
                     .build();
 
             exchangeMessageRepository.save(message);
@@ -166,6 +168,7 @@ public class ExchangeMessageService {
                     .translatedContent(aiResult.getTranslatedText())
                     .imageUrl(uploadedImageUrl)
                     .status("UNREAD")
+                    .emotion(aiResult.getEmotion())
                     .build();
 
             exchangeMessageRepository.save(message);
