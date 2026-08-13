@@ -8,6 +8,8 @@ import java.util.List;
 @Getter
 @Builder
 public class GuardianDashboardResponse {
+
+    private Long seniorId;
     private String seniorName;
     private String sentiment;
     private int gardenLevel;

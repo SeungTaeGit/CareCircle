@@ -108,6 +108,7 @@ public class ActivityService {
                 .collect(Collectors.toList());
 
         return GuardianDashboardResponse.builder()
+                .seniorId(senior.getId())
                 .seniorName(senior.getName())
                 .sentiment("Sunny")
                 .gardenLevel(calculatedGardenLevel)
