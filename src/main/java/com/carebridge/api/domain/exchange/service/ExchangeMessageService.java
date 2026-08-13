@@ -9,6 +9,7 @@ import com.carebridge.api.domain.exchange.repository.ExchangeMessageRepository;
 import com.carebridge.api.domain.mission.entity.ToxicExpressionLog;
 import com.carebridge.api.domain.mission.enums.ToxicCategory;
 import com.carebridge.api.domain.mission.repository.ToxicExpressionLogRepository;
+import com.carebridge.api.domain.reward.service.GardenService; // 💡 [추가]
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.repository.SeniorRepository;
 import com.carebridge.api.global.util.S3Uploader;
@@ -31,6 +32,7 @@ public class ExchangeMessageService {
     private final S3Uploader s3Uploader;
     private final CareAiService careAiService;
     private final ToxicExpressionLogRepository toxicExpressionLogRepository;
+    private final GardenService gardenService;
 
     @Transactional
     public void sendMessage(Long senderId, ExchangeMessageRequest request, MultipartFile audioFile) {
@@ -80,6 +82,8 @@ public class ExchangeMessageService {
             exchangeMessageRepository.save(message);
             log.info("✅ [전송 완료] {} 번역본: {}", targetLanguage, aiResult.getTranslatedText());
 
+            gardenService.addExperiencePoint(sender.getId(), 5);
+
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
@@ -119,6 +123,8 @@ public class ExchangeMessageService {
                     .build();
 
             exchangeMessageRepository.save(message);
+
+            gardenService.addExperiencePoint(sender.getId(), 5);
 
         } catch (IllegalArgumentException e) {
             throw e;
@@ -163,6 +169,8 @@ public class ExchangeMessageService {
                     .build();
 
             exchangeMessageRepository.save(message);
+
+            gardenService.addExperiencePoint(sender.getId(), 5);
 
         } catch (IllegalArgumentException e) {
             throw e;

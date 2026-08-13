@@ -9,6 +9,7 @@ import com.carebridge.api.domain.mission.enums.ToxicCategory;
 import com.carebridge.api.domain.mission.exception.MissionNotFoundException;
 import com.carebridge.api.domain.mission.repository.DailyMissionRepository;
 import com.carebridge.api.domain.mission.repository.ToxicExpressionLogRepository;
+import com.carebridge.api.domain.reward.service.GardenService; // 💡 [추가]
 import com.carebridge.api.domain.senior.entity.Senior;
 import com.carebridge.api.domain.senior.enums.InterestLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class DailyMissionService {
     private final DailyMissionRepository dailyMissionRepository;
     private final CareAiService careAiService;
     private final ToxicExpressionLogRepository toxicExpressionLogRepository;
+    private final GardenService gardenService;
 
     public List<DailyMission> getTodayMissions(Long seniorId) {
         LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
@@ -62,7 +64,6 @@ public class DailyMissionService {
         }
 
         mission.skipMission();
-
         evaluateAndUpdateSeniorInterestLevel(mission.getSenior());
     }
 
@@ -82,11 +83,10 @@ public class DailyMissionService {
                 ? mission.getMissionTemplate().getRewardXp()
                 : 10;
         senior.addXp(reward);
+
+        gardenService.addExperiencePoint(senior.getId(), reward);
     }
 
-    // =========================================================================
-    // [핵심 로직] 기획안 조건표 기반 관심 수준(InterestLevel) 평가 및 갱신 엔진
-    // =========================================================================
     private void evaluateAndUpdateSeniorInterestLevel(Senior senior) {
         List<DailyMission> recentMissions = dailyMissionRepository.findTop3BySeniorIdOrderByAssignedAtDesc(senior.getId());
 
